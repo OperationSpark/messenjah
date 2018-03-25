@@ -8,42 +8,80 @@
 
   factory.dispatcher = function() {
     let map = {};
-    return {
-      on: function(type, callback) {
-        if(typeof callback !== 'function') throw new TypeError('The callback param must be a Function!');
-        const callbacks = map[type];
-        if(callbacks && callbacks.indexOf(callback) === -1) {
-          callbacks.push(callback);
+    
+    function addMaybe(type, callback, times = -1) {
+      const callbacks = map[type];
+        if(callbacks && !has(type, callback)) {
+          callbacks.push({ callback, times });
         } else {
-          map[type] = [callback];
+          map[type] = [{ callback, times }];
         }
-        return this;
-      },
-      off: function(type, callback) {
-        const callbacks = map[type];
-        if(callbacks) {
-          const index = callbacks.indexOf(callback);
-          if(index > -1) callbacks.splice(index, 1);
+    }
+    
+    function on(type, callback) {
+      if(typeof callback !== 'function') throw new TypeError('The callback param must be a Function!');
+      addMaybe(type, callback);
+      return this;
+    }
+    
+    function once(type, callback) {
+      if(typeof callback !== 'function') throw new TypeError('The callback param must be a Function!');
+      addMaybe(type, callback, 1);
+      return this;
+    }
+    
+    function off(type, callback) {
+      const callbacks = map[type];
+      if(callbacks) {
+        for (let i = 0; i < callbacks.length; i++) {
+          const entry = callbacks[i];
+          if(entry.callback === callback) {
+            callbacks.splice(i, 1);
+            break;
+          }
         }
-        return this;
-      },
-      has: function(type, handler = undefined) {
-        const callbacks = map[type];
-        if(typeof handler === 'function') {
-          return callbacks && callbacks.indexOf(handler) > -1 ? true : false;
+      }
+      return this;
+    }
+    
+    function has(type, callback = undefined) {
+      const callbacks = map[type];
+      if(callbacks && typeof callback === 'function') {
+        for(let i = 0; i < callbacks.length; i++) {
+          const entry = callbacks[i];
+          if(entry.callback === callback) return true;
         }
-        return callbacks && callbacks.length ? true : false;
-      },
-      dispatch: function(event) {
-        map[event.type].forEach(function(callback) {
-          callback(event);
+        return false;
+      }
+      return callbacks && callbacks.length ? true : false;
+    }
+    
+    function dispatch(event) {
+      const callbacks = map[event.type];
+      if(callbacks) {
+        const survivors = [];
+        callbacks.forEach(function(entry) {
+          entry.callback(event);
+          if(entry.times !== 1) survivors.push(entry); 
         });
-        return this;
-      },
-      reset: function() {
+        map[event.type] = survivors;
+      }
+      return this;
+    }
+    
+    function clearHandlers() {
         map = {};
         return this;
-      },
+      }
+    
+    // return the api //
+    return {
+      on,
+      once, 
+      off,
+      has,
+      dispatch,
+      clearHandlers,
     };
   };
   

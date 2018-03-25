@@ -38,6 +38,19 @@ describe('dispatcher', function () {
       expect(() => dispatcher.on('click', 1)).to.throw(TypeError);
     });
   });
+  describe('once', function () {
+    it('should add a handler for the given event type, only handled once', function () {
+      const 
+        dispatcher = factory.dispatcher(),
+        callback = sinon.spy();
+      dispatcher.once('click', callback);
+      expect(dispatcher.has('click', callback)).to.be.true;
+      dispatcher.dispatch(new Event('click'));
+      expect(dispatcher.has('click', callback)).to.be.false;
+      dispatcher.dispatch(new Event('click'));
+      expect(callback.calledOnce).to.be.true;
+    });
+  });
   describe('off', function () {
     it('should remove a handler for the given event type', function () {
       const
@@ -90,6 +103,10 @@ describe('dispatcher', function () {
     });
   });
   describe('dispatch', function () {
+    it('should do nothing if no handlers registered for event of type', function () {
+      const dispatcher = factory.dispatcher();
+      expect(() => dispatcher.dispatch(new Event('click'))).to.not.throw();
+    });
     it('should dispatch to all handlers registered for event of type', function () {
       const
         dispatcher = factory.dispatcher(),
@@ -113,12 +130,12 @@ describe('dispatcher', function () {
       expect(callbackTwo.calledOnce).to.be.false;
     });
   });
-  describe('reset', function () {
+  describe('clearHandlers', function () {
     it('should clear the map of references to any registerd handlers', function () {
       const callback = function() {};
       expect(factory.dispatcher()
         .on('click', callback)
-        .reset()
+        .clearHandlers()
         .has('click')).to.be.false;
     });
   });
