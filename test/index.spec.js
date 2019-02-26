@@ -26,6 +26,7 @@ describe('dispatcher', function () {
         dispatcher = factory.dispatcher(),
         callback = sinon.spy();
       dispatcher.on('click', callback);
+      dispatcher.on('click', callback);
       dispatcher.dispatch(new Event('click'));
       expect(callback.calledOnce).to.be.true;
     });

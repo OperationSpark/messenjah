@@ -11,11 +11,11 @@
     
     function addMaybe(type, callback, times = -1) {
       const callbacks = map[type];
-        if(callbacks && !has(type, callback)) {
-          callbacks.push({ callback, times });
-        } else {
-          map[type] = [{ callback, times }];
-        }
+      if(callbacks) {
+        if(!has(type, callback)) callbacks.push({ callback, times });
+      } else {
+        map[type] = [{ callback, times }];
+      }
     }
     
     function on(type, callback) {
@@ -70,9 +70,9 @@
     }
     
     function clearHandlers() {
-        map = {};
-        return this;
-      }
+      map = {};
+      return this;
+    }
     
     // return the api //
     return {
